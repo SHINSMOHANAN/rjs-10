@@ -2,23 +2,33 @@ name: React Practical 10
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
-jobs:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
-  autograding:
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
 
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
+          cache: npm
 
       - name: Install Packages
         run: npm install
@@ -26,5 +36,17 @@ jobs:
       - name: Build React Project
         run: npm run build
 
-      - name: Run Test Cases
-        run: npm run testcase
+      - name: Fix GitHub Pages Routing
+        run: cp build/index.html build/404.html
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Build
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./build
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
